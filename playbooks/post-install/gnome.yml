@@ -1,0 +1,97 @@
+---
+- name: Setup Gnome desktop manager look and feel with specific packages and configs
+  hosts: all
+  become: true
+  tasks:
+    # Install tweaks and extensions
+    - name: Install GNOME tweaks and extensions
+      ansible.builtin.apt:
+        pkg:
+          - gnome-tweaks
+          - gir1.2-gtop-2.0
+          - gnome-shell-extension-system-monitor
+        state: present
+
+    # Apply custom GNOME settings
+    - name: Show battery percentage
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.interface show-battery-percentage true
+      args:
+        executable: /bin/bash
+
+    - name: Show clock date
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.interface clock-show-date true
+      args:
+        executable: /bin/bash
+
+    - name: Show clock seconds
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.interface clock-show-seconds true
+      args:
+        executable: /bin/bash
+
+    - name: Show clock weekday
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.interface clock-show-weekday true
+      args:
+        executable: /bin/bash
+
+    - name: Set clock format
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.interface clock-format '24h'
+      args:
+        executable: /bin/bash
+
+    - name: Set window button layout
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.wm.preferences button-layout ":minimize,maximize,close"
+      args:
+        executable: /bin/bash
+
+    # Add custom keybindings
+    - name: Add custom keybindings
+      ansible.builtin.shell: |
+        gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "[ \
+          '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', \
+          '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/' \
+        ]"
+      args:
+        executable: /bin/bash
+
+    - name: Set keybinding for Tilix in quake mode (F1)
+      ansible.builtin.shell: |
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name "'Tilix'"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding "'F1'"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command "'tilix --quake'"
+      args:
+        executable: /bin/bash
+
+    - name: Set keybinding for Flameshot (Super + PrintScreen)
+      ansible.builtin.shell: |
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name "'Flameshot'"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding "'<Super>Print'"
+        gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command "'flameshot gui'"
+      args:
+        executable: /bin/bash
+
+    # Add dock favorites
+    - name: Add dock favorites
+      ansible.builtin.shell: |
+        gsettings set org.gnome.shell favorite-apps "['google-chrome.desktop', 'firefox.desktop', 'opera.desktop', 'discord.desktop', 'org.gnome.Geary.desktop', 'code.desktop', 'mongodb-compass.desktop', 'com.getpostman.Postman.desktop', 'dockstation.desktop', 'org.gnome.Nautilus.desktop', 'org.gnome.Terminal.desktop', 'io.elementary.appcenter.desktop']"
+      args:
+        executable: /bin/bash
+
+    # Set GDM profile picture
+    - name: Set GDM profile picture
+      ansible.builtin.copy:
+        src: config/misc/profile.png
+        dest: /var/lib/AccountsService/icons/{{ ansible_user_id }}
+
+    # Set desktop background picture
+    - name: Set desktop background picture
+      ansible.builtin.shell: |
+        PIC_PATH=/usr/share/backgrounds/pop/nasa-53884.jpg
+        gsettings set org.gnome.desktop.background picture-uri "file://$PIC_PATH"
+      args:
+        executable: /bin/bash

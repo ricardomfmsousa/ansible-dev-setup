@@ -1,0 +1,73 @@
+---
+- name: Install virtualization tools
+  hosts: all
+  become: true
+  tasks:
+    # Prepare for Docker install
+    - name: Prepare for Docker install
+      ansible.builtin.shell: |
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --yes --dearmor -o /etc/apt/keyrings/docker.gpg
+        sudo chmod a+r /etc/apt/keyrings/docker.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+      args:
+        executable: /bin/bash
+
+    # Update apt packages
+    - name: Update apt packages
+      ansible.builtin.apt:
+        upgrade: no
+        update_cache: yes
+        cache_valid_time: 86400 # One day
+
+    # VirtualBox Installation
+    - name: Set VirtualBox license to true
+      ansible.builtin.debconf:
+        name: virtualbox-ext-pack
+        question: virtualbox-ext-pack/license
+        value: 'true'
+        vtype: select
+
+    - name: Install VirtualBox and related packages
+      ansible.builtin.apt:
+        pkg:
+          - virtualbox # VirtualBox
+          - virtualbox-dkms # VirtualBox DKMS
+          - virtualbox-ext-pack # VirtualBox Extension Pack
+          - virtualbox-guest-additions-iso # VirtualBox Guest Additions ISO
+          - virtualbox-guest-utils # VirtualBox Guest Utilities
+        state: present
+        update_cache: yes
+
+    # QEMU Installation
+    - name: Install QEMU packages
+      ansible.builtin.apt:
+        pkg:
+          - qemu-system # QEMU System
+          - qemu-user-static # QEMU User Static
+        state: present
+        update_cache: yes
+
+    # Docker Installation
+    - name: Install Docker and related packages
+      ansible.builtin.apt:
+        pkg:
+          - docker-ce # Docker Community Edition
+          - docker-ce-cli # Docker CLI
+          - containerd.io # Container runtime
+          - docker-buildx-plugin # Docker Buildx plugin
+          - docker-compose-plugin # Docker Compose plugin
+        state: present
+        update_cache: yes
+
+    # Allow running Docker without sudo
+    - name: Add current user to Docker group
+      ansible.builtin.user:
+        name: '{{ ansible_user }}'
+        groups: docker
+        append: yes
+
+    - name: Reload Docker group membership
+      ansible.builtin.shell: newgrp docker
+      args:
+        executable: /bin/bash

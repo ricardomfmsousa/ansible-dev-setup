@@ -1,0 +1,22 @@
+---
+- name: Install office productivity tools
+  hosts: all
+  become: true
+  tasks:
+    # Update apt cache
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # Install native packages
+    - name: Install office productivity packages
+      ansible.builtin.apt:
+        pkg:
+          - libreoffice # Office suite
+          - calibre # E-book management
+          - thunderbird # Email client
+          - evolution # Email client with calendar integration
+          - okular # Document viewer
+          - evince # Document viewer for multiple formats
+          - focalboard # Project management tool
+        state: present

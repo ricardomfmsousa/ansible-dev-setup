@@ -1,0 +1,48 @@
+---
+- name: Install 3D modeling and slicing tools
+  hosts: all
+  become: true
+  tasks:
+    # Update apt cache
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # Install native 3D modeling and slicing tools
+    - name: Install 3D modeling and slicing packages
+      ansible.builtin.apt:
+        pkg:
+          - freecad # 3D CAD modeler
+          - openscad # The Programmers Solid 3D CAD Modeller
+          - cura # 3D printer slicing application
+          - prusa-slicer # Slicer for 3D printers
+        state: present
+
+    # Install OrcaSlicer from source
+    - name: Install dependencies for OrcaSlicer
+      ansible.builtin.apt:
+        pkg:
+          - git # Version control system
+          - build-essential # Informational list of build-essential packages
+          - cmake # Cross-platform, open-source make system
+          - libboost-all-dev # Boost libraries for C++
+          - libeigen3-dev # Lightweight library for vector and matrix math
+          - libvtk7-dev # VTK libraries for 3D computer graphics, image processing, and visualization
+        state: present
+
+    - name: Clone OrcaSlicer repository
+      ansible.builtin.git:
+        repo: 'https://github.com/TheOrcaOrca/OrcaSlicer.git'
+        dest: /tmp/OrcaSlicer
+        update: yes
+
+    - name: Build and install OrcaSlicer
+      ansible.builtin.shell: |
+        cd /tmp/OrcaSlicer
+        mkdir build
+        cd build
+        cmake ..
+        make
+        sudo make install
+      args:
+        executable: /bin/bash

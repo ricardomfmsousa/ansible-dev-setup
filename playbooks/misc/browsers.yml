@@ -1,0 +1,107 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    # Google Chrome
+    - name: Download Google Chrome .deb package
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
+
+    - name: Install Google Chrome
+      ansible.builtin.apt:
+        deb: /tmp/google-chrome-stable_current_amd64.deb
+        update_cache: yes
+
+    # Brave Browser
+    - name: Add Brave browser repository
+      ansible.builtin.apt_key:
+        url: https://brave-browser-apt-release.s3.brave.com/brave-core.asc
+        state: present
+
+    - name: Add Brave browser APT source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+
+    - name: Install Brave browser
+      ansible.builtin.apt:
+        name: brave-browser
+        state: present
+        update_cache: yes
+
+    # Chromium
+    - name: Install Chromium
+      ansible.builtin.apt:
+        name: chromium-browser
+        state: present
+        update_cache: yes
+
+    # Opera
+    - name: Add Opera browser repository
+      ansible.builtin.apt_key:
+        url: https://deb.opera.com/archive.key
+        state: present
+
+    - name: Add Opera browser APT source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://deb.opera.com/opera-stable/ stable non-free"
+
+    - name: Install Opera browser
+      ansible.builtin.apt:
+        name: opera-stable
+        state: present
+        update_cache: yes
+
+    # Microsoft Edge
+    - name: Add Microsoft Edge repository
+      ansible.builtin.apt_key:
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+
+    - name: Add Microsoft Edge APT source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main"
+
+    - name: Install Microsoft Edge
+      ansible.builtin.apt:
+        name: microsoft-edge-stable
+        state: present
+        update_cache: yes
+
+    # Responsively App
+    - name: Add GPG key for Responsively repository
+      ansible.builtin.apt_key:
+        url: https://dl.bintray.com/ricedps/apt.asc
+        state: present
+
+    - name: Add Responsively APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://dl.bintray.com/ricedps/deb stable main"
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Responsively
+      ansible.builtin.apt:
+        name: responsively
+        state: present
+
+    # Tor Browser
+    - name: Add Tor Browser repository and GPG key
+      ansible.builtin.apt_key:
+        url: https://deb.torproject.org/torproject.org/pool/main/t/tor-archive-keyring/tor-archive-keyring.gpg
+        state: present
+
+    - name: Add Tor Browser APT source
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64] https://deb.torproject.org/torproject.org $(lsb_release -cs) main"
+
+    - name: Update apt cache after adding Tor repository
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install Tor Browser
+      ansible.builtin.apt:
+        name: torbrowser-launcher
+        state: present

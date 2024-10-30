@@ -1,0 +1,73 @@
+---
+- name: Run all playbooks pre-installing their global dependencies
+  hosts: all
+  become: true
+  tasks:
+    # Update and upgrade apt packages
+    - name: Update and upgrade apt packages
+      ansible.builtin.apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 86400 # One day
+
+    # Install global system and build dependencies
+    - name: Install global system and build dependencies
+      ansible.builtin.apt:
+        pkg:
+          - dbus-x11 # D-Bus X11 bridge
+          - python3-pip # Python package installer
+          - python3-setuptools # Python package development tools
+          - build-essential # Informational list of build-essential packages
+          - libssl-dev # SSL development libraries
+          - ca-certificates # Common CA certificates
+          - curl # Command-line tool for transferring data with URL syntax
+          - wget # Network utility to retrieve files from the web
+          - gnupg # GNU Privacy Guard, free PGP replacement
+          - software-properties-common # Manage repositories for installation of software
+          - apt-transport-https # Allow the use of repositories accessed via the HTTP Secure protocol
+          - dirmngr # Network certificate management service
+          - gnupg2 # GNU Privacy Guard, complete OpenPGP standard implementation
+          - git # Distributed version control system
+        state: present
+
+    # Install Ansible Python dependencies
+    - name: Install Ansible Python dependencies
+      ansible.builtin.pip:
+        name: 'psutil'
+        executable: pip3
+
+    # Copy all utility scripts and configs to /tmp
+    - name: Copy all utility scripts and configs to /tmp
+      become: false
+      ansible.builtin.copy:
+        src: '{{ item }}'
+        dest: /tmp
+        mode: '0777'
+      with_items:
+        - ../lib
+        - ../config
+
+    # Setup Flatpak Flathub repository
+    - name: Setup Flatpak Flathub repository
+      community.general.flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: system
+
+# Import additional playbooks
+- import_playbook: development/database.yml
+- import_playbook: development/git.yml
+- import_playbook: development/ide.yml
+- import_playbook: development/runtimes.yml
+- import_playbook: development/shell.yml
+- import_playbook: development/virtualization.yml
+- import_playbook: misc/browsers.yml
+- import_playbook: misc/cad.yml
+- import_playbook: misc/communications.yml
+- import_playbook: misc/downloads.yml
+- import_playbook: misc/media.yml
+- import_playbook: misc/productivity.yml
+- import_playbook: misc/utilities.yml
+- import_playbook: post-install/dotfiles.yml
+- import_playbook: post-install/gnome.yml

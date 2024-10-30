@@ -1,0 +1,66 @@
+---
+- name: Install and configure shell and related tools
+  hosts: all
+  become: false
+  vars:
+    the_user: '{{ ansible_user_id }}'
+  tasks:
+    # Install native packages
+    - name: Install native packages
+      become: true
+      ansible.builtin.apt:
+        pkg:
+          - zsh # Extended Bourne shell with many improvements
+          - tmux # Terminal multiplexer
+          - tilix # Advanced and clean GTK3 tiling terminal emulator
+
+    # Change the default terminal to Tilix and add dock shortcut
+    - name: Change the default terminal to Tilix
+      ansible.builtin.shell: |
+        gsettings set org.gnome.desktop.default-applications.terminal exec tilix
+      args:
+        executable: /bin/bash
+
+    - name: Replace Gnome Terminal dock shortcut with Tilix
+      ansible.builtin.shell: |
+        FAVOURITES=$(gsettings get org.gnome.shell favorite-apps)
+        GNOME_TERM=org.gnome.Terminal.desktop
+        TILIX_TERM=com.gexperts.Tilix.desktop
+        UPDATED_FAVOURITES=$(echo $FAVOURITES | sed "s/$GNOME_TERM/$TILIX_TERM/")
+        gsettings set org.gnome.shell favorite-apps "$UPDATED_FAVOURITES"
+      args:
+        executable: /bin/bash
+
+    # Load Tilix configurations
+    - name: Load Tilix configs
+      become: true
+      ansible.builtin.shell: |
+        export $(dbus-launch)
+        dconf load /com/gexperts/Tilix/ < /tmp/config/misc/tilix.dconf
+      args:
+        executable: /bin/bash
+
+    # Change the default shell to zsh
+    - name: Change the default shell to zsh
+      become: true
+      ansible.builtin.user:
+        name: '{{ the_user }}'
+        shell: /bin/zsh
+
+    # Install Oh My Zsh framework for managing zsh configuration
+    - name: Install Oh My Zsh framework
+      ansible.builtin.shell: |
+        rm -rf "$HOME/.oh-my-zsh"
+        sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh) --unattended"
+      args:
+        executable: /bin/bash
+
+    # Install and setup zsh plugins
+    - name: Install and setup zsh plugins
+      ansible.builtin.shell: |
+        git clone https://github.com/zsh-users/zsh-autosuggestions \
+        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
+        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
+      args:
+        executable: /bin/bash

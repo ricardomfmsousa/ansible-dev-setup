@@ -1,0 +1,65 @@
+---
+- name: Install audio, video, and image related software
+  hosts: all
+  become: true
+  tasks:
+    # Update apt cache
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # Install Flatpak packages (com.obsproject.Studio)
+    - name: Install Flatpak packages
+      community.general.flatpak:
+        name:
+          - com.obsproject.Studio # Video streamer / capturer
+
+    # Install native video packages
+    - name: Install video packages
+      ansible.builtin.apt:
+        pkg:
+          - v4l2loopback-dkms # Kernel module for creating V4L2 loopback devices
+          - libavcodec-extra # Additional codecs for libav
+          - ffmpeg # Tool to convert multimedia formats
+          - cheese # Webcam booth
+          - kazam # Screen recording program
+          - vlc # Multimedia player and streamer
+        state: present
+
+    # Install native audio packages
+    - name: Install audio packages
+      ansible.builtin.apt:
+        pkg:
+          - audacity # Audio editor and recorder
+        state: present
+
+    # Install Spotify
+    - name: Install Spotify
+      ansible.builtin.shell: |
+        curl -sS https://download.spotify.com/debian/pubkey.gpg | sudo apt-key add -
+        echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
+        sudo apt-get update && sudo apt-get install spotify-client
+      args:
+        executable: /bin/bash
+
+    # Install native graphics packages
+    - name: Install graphics packages
+      ansible.builtin.apt:
+        pkg:
+          - krita # Digital painting program
+          - gimp # GNU Image Manipulation Program
+          - gimp-data # Data files for GIMP
+          - gimp-plugin-registry # Plugins for GIMP
+          - gimp-data-extras # Additional data files for GIMP
+          - inkscape # Vector graphics editor
+          - imagemagick # Image manipulation tool
+          - flameshot # Powerful yet simple screenshot software
+        state: present
+
+    # Set VLC as default video/audio player
+    - name: Set VLC as default video/audio player
+      ansible.builtin.shell: |
+        xdg-mime default vlc.desktop video/*
+        xdg-mime default vlc.desktop audio/*
+      args:
+        executable: /bin/bash

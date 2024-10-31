@@ -39,15 +39,19 @@
           - docker-ce-cli # Docker CLI
           - containerd.io # Container runtime
           - docker-buildx-plugin # Docker Buildx plugin
-          - docker-compose # Define and run multi-container applications
           - docker-compose-plugin # Docker Compose plugin
         state: present
         update_cache: yes
 
-    # Allow running Docker without sudo
     - name: Add current user to Docker group
       ansible.builtin.user:
         name: '{{ ansible_user }}'
         groups: docker
         append: yes
         state: present
+
+    - name: Fix permissions for Docker socket
+      ansible.builtin.file:
+        path: /var/run/docker.sock
+        mode: '0666'
+        state: file

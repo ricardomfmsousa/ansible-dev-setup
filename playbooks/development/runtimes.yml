@@ -23,7 +23,6 @@
           - libgdbm-dev # GNU dbm development libraries
           - re2c # Lexical analyzer generator
           - sqlite3
-
         state: present
       become: true
 
@@ -87,12 +86,21 @@
       args:
         executable: /bin/zsh
 
-    # TODO: PHP
-    # - name: Add asdf php plugin, install and set latest PHP version
-    #   ansible.builtin.shell: |
-    #     . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
-    #     asdf plugin-add php https://github.com/asdf-community/asdf-php.git || true
-    #     asdf install php latest
-    #     asdf global php latest
-    #   args:
-    #     executable: /bin/zsh
+    # PHP
+    - name: Install php runtime dependencies
+      ansible.builtin.apt:
+        name:
+          - libgd-dev
+          - libonig-dev
+          - libzip-dev
+        state: present
+      become: true
+
+    - name: Add asdf php plugin, install and set latest PHP version
+      ansible.builtin.shell: |
+        . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
+        asdf plugin-add php https://github.com/asdf-community/asdf-php.git || true
+        asdf install php latest
+        asdf global php latest
+      args:
+        executable: /bin/zsh

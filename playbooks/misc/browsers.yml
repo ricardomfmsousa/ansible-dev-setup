@@ -67,7 +67,7 @@
 
     - name: Add Microsoft GPG key
       ansible.builtin.shell: |
-        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-edge-archive-keyring.gpg
+        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-edge-archive-keyring.gpg --yes
       args:
         executable: /bin/bash
 

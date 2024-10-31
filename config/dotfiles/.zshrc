@@ -88,6 +88,12 @@ fi
 # Compilation flags
 # export ARCHFLAGS="-arch x86_64"
 
+# Load asdf runtime manager
+. $HOME/.asdf/asdf.sh
+. $HOME/.asdf/completions/asdf.bash
+. ~/.asdf/plugins/java/set-java-home.zsh
+
+# Set PATHs
 # ssh
 export SSH_KEY_PATH="~/.ssh/rsa_id"
 # JRE/JDK PATH
@@ -121,11 +127,6 @@ autoload -Uz compinit && compinit -i
 fpath=(${ASDF_DIR}/completions $fpath)
 # Initialise completions with ZSH's compinit
 autoload -Uz compinit && compinit
-
-# Load asdf runtime manager
-. $HOME/.asdf/asdf.sh
-. $HOME/.asdf/completions/asdf.bash
-. ~/.asdf/plugins/java/set-java-home.zsh
 
 # Process /etc/profile file with bash emulation, which
 # sources /etc/profile.d/* and sets the proper PATHs, etc.

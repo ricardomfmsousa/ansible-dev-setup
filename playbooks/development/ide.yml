@@ -1,26 +1,18 @@
 ---
 - name: Install all development playbooks and dependencies
   hosts: all
-  become: false
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      become: true
-      ansible.builtin.apt:
-        update_cache: yes
-
     # Install native packages
     - name: Install native packages
-      become: true
       ansible.builtin.apt:
         pkg:
           - vim # Highly configurable text editor
           - code # TypeScript IDE from Microsoft
         state: present
+      become: true
 
     # Install JetBrains Toolbox
     - name: Install JetBrains Toolbox - manage all available JetBrains software
-      become: true
       ansible.builtin.shell: |
         . /tmp/lib/misc.sh
         TOOLBOX_URL=$(curl --silent 'https://data.services.jetbrains.com/products/releases?code=TBA&latest=true&type=release' \
@@ -42,17 +34,19 @@
         add-to-startup jetbrains-toolbox $APP_IMAGE_FOLDER/jetbrains-toolbox.sh
       args:
         executable: /bin/bash
+      become: true
 
     # Set VSCode as default text editor
     - name: Set VSCode as default text editor
-      become: true
       ansible.builtin.shell: xdg-mime default code.desktop text/plain
       args:
         executable: /bin/bash
 
     # Restore VSCode settings
     - name: Restore VSCode settings
-      become: true
       ansible.builtin.copy:
         src: ../../config/misc/vs-code-settings.json
-        dest: ~/.config/Code/User/settings.json
+        dest: '{{ ansible_env.HOME }}/.config/Code/User/settings.json'
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: '0644'

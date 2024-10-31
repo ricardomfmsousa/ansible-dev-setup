@@ -1,18 +1,17 @@
 ---
 - name: Install and configure shell and related tools
   hosts: all
-  become: false
   vars:
     the_user: '{{ ansible_user_id }}'
   tasks:
     # Install native packages
     - name: Install native packages
-      become: true
       ansible.builtin.apt:
         pkg:
           - zsh # Extended Bourne shell with many improvements
           - tmux # Terminal multiplexer
           - tilix # Advanced and clean GTK3 tiling terminal emulator
+      become: true
 
     # Change the default terminal to Tilix and add dock shortcut
     - name: Change the default terminal to Tilix
@@ -33,19 +32,19 @@
 
     # Load Tilix configurations
     - name: Load Tilix configs
-      become: true
       ansible.builtin.shell: |
         export $(dbus-launch)
         dconf load /com/gexperts/Tilix/ < /tmp/config/misc/tilix.dconf
       args:
         executable: /bin/bash
+      become: true
 
     # Change the default shell to zsh
     - name: Change the default shell to zsh
-      become: true
       ansible.builtin.user:
         name: '{{ the_user }}'
         shell: /bin/zsh
+      become: true
 
     # Install Oh My Zsh framework for managing zsh configuration
     - name: Install Oh My Zsh framework

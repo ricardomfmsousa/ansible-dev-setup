@@ -3,31 +3,15 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
-    # Install Meld
-    - name: Install Meld - Visual diff and merge tool
-      ansible.builtin.apt:
-        name: meld
-        state: present
-
-    # Install Gitk
-    - name: Install Gitk - Git repository browser
-      ansible.builtin.apt:
-        name: gitk
-        state: present
-
-    # Install additional Git tools
-    - name: Install additional Git tools
+    - name: Install native packages
       ansible.builtin.apt:
         name:
-          - git-gui          # Git GUI
-          - tig              # Text-mode interface for Git
-          - git-cola         # Powerful, user-friendly Git GUI
-          - git-extras       # Additional Git utilities
-          - hub              # GitHub CLI wrapper
-          - stgit            # Stack of patches on Git
+          - git-gui # Git GUI
+          - tig # Text-mode interface for Git
+          - git-cola # Powerful, user-friendly Git GUI
+          - git-extras # Additional Git utilities
+          - hub # GitHub CLI wrapper
+          - stgit # Stack of patches on Git
+          - meld # Visual diff and merge tool
+          - gitk # Git repository browser
         state: present

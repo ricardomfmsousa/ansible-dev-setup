@@ -3,11 +3,6 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     # Install Flatpak packages (com.obsproject.Studio)
     - name: Install Flatpak packages
       community.general.flatpak:
@@ -32,15 +27,6 @@
         pkg:
           - audacity # Audio editor and recorder
         state: present
-
-    # Install Spotify
-    - name: Install Spotify
-      ansible.builtin.shell: |
-        curl -sS https://download.spotify.com/debian/pubkey.gpg | sudo apt-key add -
-        echo "deb http://repository.spotify.com stable non-free" | sudo tee /etc/apt/sources.list.d/spotify.list
-        sudo apt-get update && sudo apt-get install spotify-client
-      args:
-        executable: /bin/bash
 
     # Install native graphics packages
     - name: Install graphics packages

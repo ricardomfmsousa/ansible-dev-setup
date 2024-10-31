@@ -3,13 +3,12 @@
   hosts: all
   become: true
   tasks:
-    # Install tweaks and extensions
     - name: Install GNOME tweaks and extensions
       ansible.builtin.apt:
         pkg:
           - gnome-tweaks
           - gir1.2-gtop-2.0
-          - gnome-shell-extension-system-monitor
+          # TODO: Add Astra Monitor [Gnome 45]
         state: present
 
     # Apply custom GNOME settings
@@ -85,7 +84,7 @@
     # Set GDM profile picture
     - name: Set GDM profile picture
       ansible.builtin.copy:
-        src: config/misc/profile.png
+        src: ../../config/misc/profile.png
         dest: /var/lib/AccountsService/icons/{{ ansible_user_id }}
 
     # Set desktop background picture

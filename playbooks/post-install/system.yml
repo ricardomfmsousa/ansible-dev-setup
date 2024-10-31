@@ -1,0 +1,29 @@
+---
+- name: Perform global system configurations
+  hosts: all
+  become: true
+  tasks:
+    # Set inotify
+    - name: Add increased inotify watchers setting to sysctl.conf
+      ansible.builtin.lineinfile:
+        path: /etc/sysctl.conf
+        line: 'fs.inotify.max_user_watches=524288'
+        create: yes
+
+    - name: Apply sysctl settings
+      ansible.builtin.command: sysctl -p
+
+    # Set hostname
+    - name: Get current hostname with uname
+      ansible.builtin.command: uname -n
+      register: current_hostname
+
+    - name: Set hostname to uname output or OS name if empty
+      ansible.builtin.set_fact:
+        new_hostname: '{{ current_hostname.stdout if current_hostname.stdout else ansible_distribution }}'
+
+    - name: Set hostname
+      ansible.builtin.shell: |
+        hostnamectl set-hostname {{ new_hostname }}
+      args:
+        executable:

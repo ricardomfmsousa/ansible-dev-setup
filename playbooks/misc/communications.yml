@@ -3,11 +3,6 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     # Install Discord
     - name: Install Discord
       ansible.builtin.apt:
@@ -16,24 +11,21 @@
 
     # Install Microsoft Teams
     - name: Install Microsoft Teams
-      ansible.builtin.apt:
-        name: teams
+      community.general.flatpak:
+        name: com.microsoft.Teams
         state: present
+        remote: flathub
 
     # Install Zoom
     - name: Install Zoom
-      ansible.builtin.apt:
-        name: zoom
+      community.general.flatpak:
+        name: us.zoom.Zoom
         state: present
-
-    # Install Slack
-    - name: Install Slack
-      ansible.builtin.apt:
-        name: slack
-        state: present
+        remote: flathub
 
     # Install Skype
     - name: Install Skype
-      ansible.builtin.apt:
-        name: skypeforlinux
+      community.general.flatpak:
+        name: com.skype.Client
         state: present
+        remote: flathub

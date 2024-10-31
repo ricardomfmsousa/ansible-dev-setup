@@ -3,11 +3,6 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     # Install native packages
     - name: Install office productivity packages
       ansible.builtin.apt:
@@ -18,5 +13,4 @@
           - evolution # Email client with calendar integration
           - okular # Document viewer
           - evince # Document viewer for multiple formats
-          - focalboard # Project management tool
         state: present

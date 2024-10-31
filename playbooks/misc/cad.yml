@@ -3,46 +3,41 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
-    # Install native 3D modeling and slicing tools
-    - name: Install 3D modeling and slicing packages
+    # Install 3D modeling tools
+    - name: Install 3D modeling tools
       ansible.builtin.apt:
         pkg:
           - freecad # 3D CAD modeler
           - openscad # The Programmers Solid 3D CAD Modeller
-          - cura # 3D printer slicing application
-          - prusa-slicer # Slicer for 3D printers
         state: present
 
-    # Install OrcaSlicer from source
+    # Install OrcaSlicer
     - name: Install dependencies for OrcaSlicer
       ansible.builtin.apt:
         pkg:
-          - git # Version control system
-          - build-essential # Informational list of build-essential packages
-          - cmake # Cross-platform, open-source make system
-          - libboost-all-dev # Boost libraries for C++
-          - libeigen3-dev # Lightweight library for vector and matrix math
-          - libvtk7-dev # VTK libraries for 3D computer graphics, image processing, and visualization
+          - curl
         state: present
 
-    - name: Clone OrcaSlicer repository
-      ansible.builtin.git:
-        repo: 'https://github.com/TheOrcaOrca/OrcaSlicer.git'
-        dest: /tmp/OrcaSlicer
-        update: yes
+    - name: Download OrcaSlicer AppImage
+      ansible.builtin.get_url:
+        url: https://github.com/SoftFever/OrcaSlicer/releases/download/v2.2.0/OrcaSlicer_Linux_V2.2.0.AppImage
+        dest: /usr/local/bin/OrcaSlicer.AppImage
+        mode: '0755'
 
-    - name: Build and install OrcaSlicer
-      ansible.builtin.shell: |
-        cd /tmp/OrcaSlicer
-        mkdir build
-        cd build
-        cmake ..
-        make
-        sudo make install
-      args:
-        executable: /bin/bash
+    - name: Download OrcaSlicer icon
+      ansible.builtin.get_url:
+        url: https://github.com/SoftFever/OrcaSlicer/raw/refs/heads/main/resources/Icon.icns
+        dest: /usr/share/icons/orcaslicer.png
+
+    - name: Create Desktop Entry for OrcaSlicer
+      ansible.builtin.copy:
+        content: |
+          [Desktop Entry]
+          Name=OrcaSlicer
+          Exec=/usr/local/bin/OrcaSlicer.AppImage
+          Icon=/usr/share/icons/orcaslicer.png
+          Type=Application
+          Categories=Graphics;
+          Terminal=false
+        dest: /usr/share/applications/orcaslicer.desktop
+        mode: '0644'

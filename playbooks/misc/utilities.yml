@@ -1,5 +1,5 @@
 ---
-- name: Install software utilities and playbooks dependencies
+- name: Install software utilities
   hosts: all
   become: true
   tasks:
@@ -46,12 +46,26 @@
           - fonts-liberation # Fonts with the same metrics as Times, Arial, and Courier
         state: present
 
-    # Download Menlo for Powerline font
-    - name: Download Menlo for Powerline font
+    # Powerline font
+    - name: Download and install Menlo for Powerline font
       ansible.builtin.get_url:
         url: http://github.com/abertsch/Menlo-for-Powerline/blob/master/Menlo%20for%20Powerline.ttf?raw=true
         dest: /usr/share/fonts/
 
-    # Update font cache
     - name: Update font cache
       ansible.builtin.command: fc-cache -vf /usr/share/fonts/
+
+    # Install AppImage Launcher
+    - name: Add AppImage Launcher PPA repository
+      apt_repository:
+        repo: 'ppa:appimagelauncher-team/stable'
+        state: present
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install AppImage Launcher
+      ansible.builtin.apt:
+        pkg:
+          - appimagelauncher

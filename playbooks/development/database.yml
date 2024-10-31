@@ -3,11 +3,6 @@
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
     # Install dependencies
     - name: Install dependencies
       ansible.builtin.apt:
@@ -18,21 +13,28 @@
         state: present
 
     # Install DBeaver - a universal  toola universal  tool
+    - name: Download DBeaver .deb package
+      ansible.builtin.get_url:
+        url: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
+        dest: /tmp/dbeaver-ce_latest_amd64.deb
+
     - name: Install DBeaver
       ansible.builtin.apt:
-        name: dbeaver
-        state: present
+        deb: /tmp/dbeaver-ce_latest_amd64.deb
+        update_cache: yes
 
     # Add MongoDB GPG key
     - name: Add MongoDB GPG key
       ansible.builtin.apt_key:
         url: https://www.mongodb.org/static/pgp/server-4.2.asc
         state: present
+        keyring: /etc/apt/trusted.gpg.d/mongodb.gpg
 
     # Add MongoDB repository
     - name: Add MongoDB repository
       ansible.builtin.apt_repository:
         repo: 'deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse'
+        state: present
 
     # Update apt cache after adding new repositories
     - name: Update apt cache after adding new repositories
@@ -46,4 +48,4 @@
         wget https://downloads.mongodb.com/compass/$LATEST_COMPASS_VERSION -O /tmp/mongodb-compass.deb
         apt install -y /tmp/mongodb-compass.deb
       args:
-        executable: /bin/zsh
+        executable: /bin/bash

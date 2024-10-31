@@ -1,54 +1,14 @@
----
 - name: Install download tools
   hosts: all
   become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
+    - name: Install native tools
       ansible.builtin.apt:
-        update_cache: yes
-
-    # Install Transmission
-    - name: Install Transmission
-      ansible.builtin.apt:
-        name: transmission
-        state: present
-
-    # Install FileZilla
-    - name: Install FileZilla
-      ansible.builtin.apt:
-        name: filezilla
-        state: present
-
-    # Install aria2
-    - name: Install aria2
-      ansible.builtin.apt:
-        name: aria2
-        state: present
-
-    # Install wget
-    - name: Install wget
-      ansible.builtin.apt:
-        name: wget
-        state: present
-
-    # Install curl
-    - name: Install curl
-      ansible.builtin.apt:
-        name: curl
-        state: present
-
-    # Install JDownloader
-    - name: Install JDownloader
-      ansible.builtin.shell: |
-        add-apt-repository ppa:jd-team/jdownloader -y
-        apt-get update
-        apt-get install jdownloader -y
-      args:
-        executable: /bin/bash
-
-    # Install qBittorrent
-    - name: Install qBittorrent
-      ansible.builtin.apt:
-        name: qbittorrent
+        name:
+          - transmission # A fast, efficient, and user-friendly torrent client
+          - filezilla # A free, open-source FTP client for file transfers
+          - aria2 # A lightweight multi-protocol & multi-source command-line download utility
+          - wget # A free utility for non-interactive download of files from the web
+          - curl # A command-line tool for transferring data with URL syntax
+          - qbittorrent # A free and open-source BitTorrent client
         state: present

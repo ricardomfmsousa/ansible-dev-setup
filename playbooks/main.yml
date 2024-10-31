@@ -14,19 +14,28 @@
     - name: Install global system and build dependencies
       ansible.builtin.apt:
         pkg:
-          - dbus-x11 # D-Bus X11 bridge
-          - python3-pip # Python package installer
+          # Build and Development Tools
+          - build-essential # Essential packages for building software
           - python3-setuptools # Python package development tools
-          - build-essential # Informational list of build-essential packages
+          - autoconf # Tool for generating configuration scripts
+          - bison # Parser generator
+          # Libraries
           - libssl-dev # SSL development libraries
+          - libyaml-dev # YAML development libraries
+          - libreadline6-dev # GNU readline development libraries
+          - zlib1g-dev # Compression library
+          - libncurses5-dev # Developer's libraries for ncurses
+          - libffi-dev # Foreign Function Interface library
+          - libgdbm-dev # GNU dbm development libraries
+          # Network and Security Tools
           - ca-certificates # Common CA certificates
           - curl # Command-line tool for transferring data with URL syntax
           - wget # Network utility to retrieve files from the web
           - gnupg # GNU Privacy Guard, free PGP replacement
-          - software-properties-common # Manage repositories for installation of software
-          - apt-transport-https # Allow the use of repositories accessed via the HTTP Secure protocol
-          - dirmngr # Network certificate management service
           - gnupg2 # GNU Privacy Guard, complete OpenPGP standard implementation
+          - dirmngr # Network certificate management service
+          - apt-transport-https # Allow the use of repositories accessed via the HTTP Secure protocol
+          # Version Control
           - git # Distributed version control system
         state: present
 
@@ -70,4 +79,5 @@
 - import_playbook: misc/productivity.yml
 - import_playbook: misc/utilities.yml
 - import_playbook: post-install/dotfiles.yml
-- import_playbook: post-install/gnome.yml
+- import_playbook: post-install/gnome-tweaks.yml
+- import_playbook: post-install/system.yml

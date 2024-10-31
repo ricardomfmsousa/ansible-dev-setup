@@ -1,55 +1,56 @@
 ---
 - name: Install and configure Java, Node.js, Go, and PHP runtimes
   hosts: all
-  become: true
   tasks:
-    # Update apt cache
-    - name: Update apt cache
-      ansible.builtin.apt:
-        update_cache: yes
-
-    # Install dependencies for asdf
-    - name: Install dependencies for asdf
+    # Install asdf
+    - name: Install dependencies for asdf and plugins
       ansible.builtin.apt:
         name:
           - curl # Command-line tool for transferring data
           - git # Version control system
+          - zsh # Extended Bourne shell with many improvements
+          - locate # Command to find files by name
           - unzip # Utility to extract compressed files
           - autoconf # Tool for generating configuration scripts
           - bison # Parser generator
-          - build-essential # Essential packages for building software
+          - build-essential # Informational list of build-essential packages
           - libssl-dev # SSL development libraries
           - libyaml-dev # YAML development libraries
-          - libreadline6-dev # GNU readline development libraries
+          - libreadline-dev # GNU readline development libraries
           - zlib1g-dev # Compression library
           - libncurses5-dev # Developer's libraries for ncurses
           - libffi-dev # Foreign Function Interface library
           - libgdbm-dev # GNU dbm development libraries
-          - zsh # Zsh shell
-        state: present
+          - re2c # Lexical analyzer generator
+          - sqlite3
 
-    # Clone asdf repository
+        state: present
+      become: true
+
     - name: Clone asdf repository
       ansible.builtin.git:
         repo: 'https://github.com/asdf-vm/asdf.git'
-        dest: ~/.asdf
+        dest: '{{ ansible_env.HOME }}/.asdf'
+        version: v0.14.1
         update: yes
 
     - name: Refresh shell to load asdf
-      ansible.builtin.shell: . ~/.zshrc
+      ansible.builtin.shell: |
+        echo '. "$HOME/.asdf/asdf.sh"' >> '{{ ansible_env.HOME }}/.zshrc'
+        . '{{ ansible_env.HOME }}/.zshrc'
       args:
-        executable: /bin/bash
+        executable: /bin/zsh
 
     # Java
     - name: Add asdf java plugin, install and set latest JDK version
       ansible.builtin.shell: |
-        . ~/.asdf/asdf.sh
+        . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
         asdf plugin-add java https://github.com/halcyon/asdf-java.git || true
         VERSION=adoptopenjdk-18.0.2+9
         asdf install java $VERSION
         asdf global java $VERSION
       args:
-        executable: /bin/bash
+        executable: /bin/zsh
 
     - name: Install Spring CLI latest version
       ansible.builtin.shell: |
@@ -62,36 +63,36 @@
         mv $INSTALL_TO/spring-$VERSION/* $INSTALL_TO
         add-to-path "$INSTALL_TO/bin"
       args:
-        executable: /bin/bash
+        executable: /bin/zsh
 
     # Node.js
     - name: Add asdf nodejs plugin, install and set latest Node.js version
       ansible.builtin.shell: |
-        . ~/.asdf/asdf.sh
+        . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
         asdf plugin-add nodejs https://github.com/asdf-vm/asdf-nodejs.git || true
         asdf install nodejs latest
         asdf global nodejs latest
         # Install global Node.js packages
         npm install -g yarn @angular/cli create-react-app next
       args:
-        executable: /bin/bash
+        executable: /bin/zsh
 
     # Go
     - name: Add asdf golang plugin, install and set latest Go version
       ansible.builtin.shell: |
-        . ~/.asdf/asdf.sh
+        . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
         asdf plugin-add golang https://github.com/kennyp/asdf-golang.git || true
         asdf install golang latest
         asdf global golang latest
       args:
-        executable: /bin/bash
+        executable: /bin/zsh
 
-    # PHP
-    - name: Add asdf php plugin, install and set latest PHP version
-      ansible.builtin.shell: |
-        . ~/.asdf/asdf.sh
-        asdf plugin-add php https://github.com/asdf-community/asdf-php.git || true
-        asdf install php latest
-        asdf global php latest
-      args:
-        executable: /bin/bash
+    # TODO: PHP
+    # - name: Add asdf php plugin, install and set latest PHP version
+    #   ansible.builtin.shell: |
+    #     . '{{ ansible_env.HOME }}/.asdf/asdf.sh'
+    #     asdf plugin-add php https://github.com/asdf-community/asdf-php.git || true
+    #     asdf install php latest
+    #     asdf global php latest
+    #   args:
+    #     executable: /bin/zsh

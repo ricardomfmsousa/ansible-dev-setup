@@ -1,23 +1,12 @@
 ---
 - name: Copy dotfiles to home directory
   hosts: all
-  become: false
   tasks:
     # Copy all configuration files under the dotfiles folder
     - name: Copy dotfiles
       ansible.builtin.copy:
-        src: dotfiles/
+        src: ../../config/dotfiles/
         dest: '{{ ansible_env.HOME }}/'
         owner: '{{ ansible_user }}'
         group: '{{ ansible_user }}'
         mode: '0644'
-
-    # List copied files (optional step for verification)
-    - name: List copied dotfiles
-      ansible.builtin.command:
-        cmd: 'ls -Al {{ ansible_env.HOME }}/dotfiles'
-      register: copied_files
-
-    - name: Display copied files
-      ansible.builtin.debug:
-        var: copied_files.stdout

@@ -1,7 +1,7 @@
 # Ansible DEV setup (debian compatible)
 
 Sets up a full development environment through [ansible](https://www.ansible.com/)
-on local or remote hosts without the need to manually copy files or perform
+on local or remote Debian based hosts without the need to manually copy files or perform
 configurations on the target machines.
 
 ## Deploy

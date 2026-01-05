@@ -11,6 +11,8 @@ configurations on the target machines.
 - Install the following dependencies:
 
   ```bash
+  sudo apt update && \
+  sudo apt install python3 python3-pip && \
   python3 -m pip install ansible ansible-runner psutil
   ```
 

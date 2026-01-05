@@ -3,11 +3,12 @@
   hosts: all
   become: true
   tasks:
-    # Install Discord
+    # Install Discord via Flatpak (more portable and updated on Flathub)
     - name: Install Discord
-      ansible.builtin.apt:
-        name: discord
+      community.general.flatpak:
+        name: com.discordapp.Discord
         state: present
+        remote: flathub
 
     # Install Microsoft Teams
     - name: Install Microsoft Teams

@@ -19,6 +19,7 @@
         gsettings set org.gnome.desktop.default-applications.terminal exec tilix
       args:
         executable: /bin/bash
+      changed_when: false
 
     - name: Replace Gnome Terminal dock shortcut with Tilix
       ansible.builtin.shell: |
@@ -29,6 +30,7 @@
         gsettings set org.gnome.shell favorite-apps "$UPDATED_FAVOURITES"
       args:
         executable: /bin/bash
+      changed_when: false
 
     # Load Tilix configurations
     - name: Load Tilix configs
@@ -38,6 +40,7 @@
       args:
         executable: /bin/bash
       become: true
+      changed_when: false
 
     # Change the default shell to zsh
     - name: Change the default shell to zsh
@@ -50,16 +53,20 @@
     - name: Install Oh My Zsh framework
       ansible.builtin.shell: |
         rm -rf "$HOME/.oh-my-zsh"
-        sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh) --unattended"
+        # Use official Oh My Zsh install script URL
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh) --unattended"
       args:
         executable: /bin/bash
 
     # Install and setup zsh plugins
-    - name: Install and setup zsh plugins
-      ansible.builtin.shell: |
-        git clone https://github.com/zsh-users/zsh-autosuggestions \
-        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-autosuggestions
-        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \
-        ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
-      args:
-        executable: /bin/bash
+    - name: Install zsh-autosuggestions plugin
+      ansible.builtin.git:
+        repo: 'https://github.com/zsh-users/zsh-autosuggestions'
+        dest: '{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins/zsh-autosuggestions'
+        update: yes
+
+    - name: Install zsh-syntax-highlighting plugin
+      ansible.builtin.git:
+        repo: 'https://github.com/zsh-users/zsh-syntax-highlighting.git'
+        dest: '{{ ansible_env.HOME }}/.oh-my-zsh/custom/plugins/zsh-syntax-highlighting'
+        update: yes

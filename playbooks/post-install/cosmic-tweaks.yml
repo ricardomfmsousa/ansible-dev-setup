@@ -1,0 +1,149 @@
+---
+- name: Setup COSMIC (Pop!_OS 24.04) tweaks and GNOME 45-compatible settings
+  hosts: all
+  become: true
+  tasks:
+    - name: 'NOTE: COSMIC compatibility guard'
+      ansible.builtin.debug:
+        msg: >-
+          This playbook applies COSMIC / GNOME 45 compatible tweaks. Each
+          gsettings command is guarded and will be skipped if the schema/key
+          is not present on the target system. If a setting is not compatible
+          with COSMIC, it will be skipped rather than failing the play.
+
+    # Older playbook installed `gnome-tweaks` and `gir1.2-gtop-2.0`.
+    # These are not relevant for COSMIC/GNOME 45; keep installation commented
+    # out so the user can opt-in if desired.
+    - name: 'NOTE: Packages previously installed (gnome-tweaks, gir1.2-gtop)'
+      ansible.builtin.debug:
+        msg: 'Skipping installation of legacy gnome-tweaks/gir1.2-gtop-2.0 (COSMIC) — enable manually if needed.'
+
+    # Apply guarded GNOME settings: each runs only if the key is writable.
+    - name: Show battery percentage (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.interface show-battery-percentage >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.interface show-battery-percentage true
+        else
+          echo "skip: show-battery-percentage not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Show clock date (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.interface clock-show-date >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.interface clock-show-date true
+        else
+          echo "skip: clock-show-date not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Show clock seconds (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.interface clock-show-seconds >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.interface clock-show-seconds true
+        else
+          echo "skip: clock-show-seconds not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Show clock weekday (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.interface clock-show-weekday >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.interface clock-show-weekday true
+        else
+          echo "skip: clock-show-weekday not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Set clock format to 24h (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.interface clock-format >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.interface clock-format '24h'
+        else
+          echo "skip: clock-format not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Set window button layout (if supported)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.desktop.wm.preferences button-layout >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.wm.preferences button-layout ':minimize,maximize,close'
+        else
+          echo "skip: button-layout not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Add custom keybindings (guarded)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.settings-daemon.plugins.media-keys custom-keybindings >/dev/null 2>&1; then
+          gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "[ '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/', '/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/' ]"
+        else
+          echo "skip: custom-keybindings not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Set Tilix quake keybinding (guarded)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name >/dev/null 2>&1; then
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ name "'Tilix'"
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ binding "'F1'"
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom0/ command "'tilix --quake'"
+        else
+          echo "skip: tilix quake keybinding not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Set Flameshot keybinding (guarded)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name >/dev/null 2>&1; then
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ name "'Flameshot'"
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ binding "'<Super>Print'"
+          gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom1/ command "'flameshot gui'"
+        else
+          echo "skip: flameshot keybinding not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Add dock favorites (guarded)
+      ansible.builtin.shell: |
+        if gsettings writable org.gnome.shell favorite-apps >/dev/null 2>&1; then
+          gsettings set org.gnome.shell favorite-apps "['google-chrome.desktop','firefox.desktop','opera.desktop','discord.desktop','org.gnome.Geary.desktop','code.desktop','mongodb-compass.desktop','com.getpostman.Postman.desktop','dockstation.desktop','org.gnome.Nautilus.desktop','org.gnome.Terminal.desktop','io.elementary.appcenter.desktop']"
+        else
+          echo "skip: favorite-apps not supported"
+        fi
+      args:
+        executable: /bin/bash
+
+    - name: Set GDM profile picture (if AccountsService present)
+      ansible.builtin.stat:
+        path: /var/lib/AccountsService/icons
+      register: accounts_icons_dir
+
+    - name: Copy GDM profile picture
+      ansible.builtin.copy:
+        src: ../../config/misc/profile.png
+        dest: /var/lib/AccountsService/icons/{{ ansible_user_id }}
+        owner: root
+        group: root
+        mode: '0644'
+      when: accounts_icons_dir.stat.exists
+
+    - name: Set desktop background (guarded)
+      ansible.builtin.shell: |
+        PIC_PATH=/usr/share/backgrounds/pop/nasa-53884.jpg
+        if gsettings writable org.gnome.desktop.background picture-uri >/dev/null 2>&1; then
+          gsettings set org.gnome.desktop.background picture-uri "file://$PIC_PATH"
+        else
+          echo "skip: background picture-uri not supported"
+        fi
+      args:
+        executable: /bin/bash

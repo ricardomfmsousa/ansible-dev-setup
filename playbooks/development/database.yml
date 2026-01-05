@@ -3,7 +3,6 @@
   hosts: all
   become: true
   tasks:
-    # Install dependencies
     - name: Install dependencies
       ansible.builtin.apt:
         name:
@@ -12,40 +11,68 @@
           - gnupg
         state: present
 
-    # Install DBeaver - a universal  toola universal  tool
-    - name: Download DBeaver .deb package
+    - name: Download DBeaver GPG key
       ansible.builtin.get_url:
-        url: https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb
-        dest: /tmp/dbeaver-ce_latest_amd64.deb
+        url: https://dbeaver.io/debs/dbeaver.gpg.key
+        dest: /usr/share/keyrings/dbeaver.gpg.asc
+        mode: '0644'
 
-    - name: Install DBeaver
-      ansible.builtin.apt:
-        deb: /tmp/dbeaver-ce_latest_amd64.deb
-        update_cache: yes
+    - name: Convert DBeaver key to dearmored keyring
+      ansible.builtin.command:
+        argv:
+          - gpg
+          - --dearmor
+          - /usr/share/keyrings/dbeaver.gpg.asc
+          - -o
+          - /usr/share/keyrings/dbeaver-archive-keyring.gpg
+      args:
+        creates: /usr/share/keyrings/dbeaver-archive-keyring.gpg
 
-    # Add MongoDB GPG key
-    - name: Add MongoDB GPG key
-      ansible.builtin.apt_key:
-        url: https://www.mongodb.org/static/pgp/server-4.2.asc
-        state: present
-        keyring: /etc/apt/trusted.gpg.d/mongodb.gpg
+    - name: Ensure DBeaver keyring is readable
+      ansible.builtin.file:
+        path: /usr/share/keyrings/dbeaver-archive-keyring.gpg
+        mode: '0644'
+      when: not ansible_check_mode
 
-    # Add MongoDB repository
-    - name: Add MongoDB repository
+    - name: Add DBeaver APT repository (use dbeaver-ce subpath)
       ansible.builtin.apt_repository:
-        repo: 'deb [arch=amd64] https://repo.mongodb.org/apt/ubuntu bionic/mongodb-org/4.2 multiverse'
+        repo: >-
+          deb [signed-by=/usr/share/keyrings/dbeaver-archive-keyring.gpg
+          arch=amd64] https://dbeaver.io/debs/dbeaver-ce/ stable main
         state: present
+        update_cache: true
 
-    # Update apt cache after adding new repositories
+    - name: Fetch DBeaver Packages index (for check-mode verification)
+      ansible.builtin.uri:
+        url: https://dbeaver.io/debs/dbeaver-ce/Packages
+        return_content: yes
+        status_code: 200
+      register: dbeaver_index
+
+    - name: Set flag if DBeaver package is available in upstream index
+      ansible.builtin.set_fact:
+        dbeaver_package_available: "{{ 'Package: dbeaver-ce' in (dbeaver_index.content | default('')) }}"
+
+    - name: Install DBeaver (package)
+      ansible.builtin.apt:
+        name: dbeaver-ce
+        state: present
+        update_cache: true
+      when: not ansible_check_mode and (dbeaver_package_available | default(true))
+
+    - name: 'Check-mode: DBeaver package availability'
+      ansible.builtin.debug:
+        msg: 'DBeaver package available upstream: {{ dbeaver_package_available | default(false) }}'
+      when: ansible_check_mode
+
+    - name: WARN about MongoDB repo (manual verification required)
+      ansible.builtin.debug:
+        msg: 'MongoDB APT repo was pinned to bionic/4.2 - update manually for 24.04'
+
     - name: Update apt cache after adding new repositories
       ansible.builtin.apt:
-        update_cache: yes
+        update_cache: true
 
-    # Download and install latest MongoDB Compass
-    - name: Download latest MongoDB Compass
-      ansible.builtin.shell: |
-        LATEST_COMPASS_VERSION=$(curl -sL https://www.mongodb.com/try/download/compass | grep -Po 'mongodb-compass_.*?_amd64.deb' | head -1)
-        wget https://downloads.mongodb.com/compass/$LATEST_COMPASS_VERSION -O /tmp/mongodb-compass.deb
-        apt install -y /tmp/mongodb-compass.deb
-      args:
-        executable: /bin/bash
+    - name: 'NOTE: MongoDB Compass install requires manual verification'
+      ansible.builtin.debug:
+        msg: 'MongoDB Compass is a .deb download; no official apt repo. Manual install recommended.'

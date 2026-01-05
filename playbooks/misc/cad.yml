@@ -7,8 +7,11 @@
     - name: Install 3D modeling tools
       ansible.builtin.apt:
         pkg:
+          - blender # 3D creation suite
+          - meshlab # 3D mesh processing software
           - freecad # 3D CAD modeler
           - openscad # The Programmers Solid 3D CAD Modeller
+          - clang-format # Tool to format C/C++/Obj-C/Openscad code
         state: present
 
     # Install OrcaSlicer

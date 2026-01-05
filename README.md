@@ -29,11 +29,13 @@ configurations on the target machines.
 ### Execute
 
 ```bash
-# Local deployment
-./deploy-local.sh
+# Local deployment (forwards optional dry-run)
+./deploy-local.sh [--dry-run|-n]
 
 # Remote deployment
-./deploy-remote.sh <target-ip> <target-username>
+./deploy-remote.sh <target-ip> <target-username> [--dry-run|-n]
+
+# Passing `--dry-run` (or `-n`) runs Ansible in check mode (adds `--check --diff`).
 ```
 
 ## Playbook development

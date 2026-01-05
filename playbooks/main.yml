@@ -6,8 +6,8 @@
     # Update and upgrade apt packages
     - name: Update and upgrade apt packages
       ansible.builtin.apt:
-        upgrade: yes
-        update_cache: yes
+        upgrade: true
+        update_cache: true
         cache_valid_time: 86400 # One day
 
     # Install global system and build dependencies
@@ -79,5 +79,5 @@
 - import_playbook: misc/productivity.yml
 - import_playbook: misc/utilities.yml
 - import_playbook: post-install/dotfiles.yml
-- import_playbook: post-install/gnome-tweaks.yml
+- import_playbook: post-install/cosmic-tweaks.yml
 - import_playbook: post-install/system.yml

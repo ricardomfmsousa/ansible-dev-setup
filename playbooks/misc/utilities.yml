@@ -35,7 +35,7 @@
           # Partition tools
           - gparted # GNOME partition editor
           - exfatprogs # Tools for exFAT filesystems
-          - exfat-fuse # Filesystem in Userspace implementation for exFAT
+          # Note: 'exfat-fuse' is deprecated on newer kernels; exfatprogs is preferred on Pop!_OS 24.04
           # Package installer
           - gdebi # Simple tool to install deb files
           # System info and monitor
@@ -49,8 +49,9 @@
     # Powerline font
     - name: Download and install Menlo for Powerline font
       ansible.builtin.get_url:
-        url: http://github.com/abertsch/Menlo-for-Powerline/blob/master/Menlo%20for%20Powerline.ttf?raw=true
-        dest: /usr/share/fonts/
+        url: https://github.com/abertsch/Menlo-for-Powerline/raw/master/Menlo%20for%20Powerline.ttf
+        dest: /usr/share/fonts/Menlo-for-Powerline.ttf
+        mode: '0644'
 
     - name: Update font cache
       ansible.builtin.command: fc-cache -vf /usr/share/fonts/
@@ -63,7 +64,7 @@
 
     - name: Update apt cache
       apt:
-        update_cache: yes
+        update_cache: true
 
     - name: Install AppImage Launcher
       ansible.builtin.apt:

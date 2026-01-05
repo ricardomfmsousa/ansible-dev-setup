@@ -3,6 +3,18 @@
   hosts: all
   become: true
   tasks:
+    - name: Download GitHub CLI GPG key (binary)
+      ansible.builtin.get_url:
+        url: https://cli.github.com/packages/githubcli-archive-keyring.gpg
+        dest: /usr/share/keyrings/githubcli-archive-keyring.gpg
+        mode: '0644'
+
+    - name: Add GitHub CLI APT source
+      ansible.builtin.apt_repository:
+        repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main'
+        filename: github-cli
+        state: present
+
     - name: Install native packages
       ansible.builtin.apt:
         name:
@@ -10,7 +22,7 @@
           - tig # Text-mode interface for Git
           - git-cola # Powerful, user-friendly Git GUI
           - git-extras # Additional Git utilities
-          - hub # GitHub CLI wrapper
+          - gh # GitHub CLI (preferred over 'hub')
           - stgit # Stack of patches on Git
           - meld # Visual diff and merge tool
           - gitk # Git repository browser

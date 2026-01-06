@@ -1,7 +1,7 @@
 # Ansible DEV setup (debian compatible)
 
 Sets up a full development environment through [ansible](https://www.ansible.com/)
-on local or remote Debian based hosts without the need to manually copy files or perform
+on local or remote Cosmic Debian based hosts without the need to manually copy files or perform
 configurations on the target machines.
 
 ## Deploy
@@ -12,8 +12,11 @@ configurations on the target machines.
 
   ```bash
   sudo apt update && \
-  sudo apt install python3 python3-pip && \
-  python3 -m pip install ansible ansible-runner psutil
+  sudo apt install -y python3 python3-pip python3-venv python3-full && \
+  python3 -m venv ~/ansible-env && \
+  source ~/ansible-env/bin/activate && \
+  pip install --upgrade pip && \
+  pip install ansible ansible-runner psutil
   ```
 
 - The **target hosts** should have ssh installed:

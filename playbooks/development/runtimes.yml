@@ -26,20 +26,31 @@
         state: present
       become: true
 
-    - name: Clone asdf repository (track main for latest)
-      ansible.builtin.git:
-        repo: 'https://github.com/asdf-vm/asdf.git'
-        dest: '{{ ansible_env.HOME }}/.asdf'
-        version: main
-        update: yes
+    - name: Get latest asdf release tag
+      ansible.builtin.uri:
+        url: https://api.github.com/repos/asdf-vm/asdf/releases/latest
+        return_content: yes
+      register: asdf_release
 
-    - name: Refresh shell to load asdf
-      ansible.builtin.shell: |
-        echo '. "$HOME/.asdf/asdf.sh"' >> '{{ ansible_env.HOME }}/.zshrc'
-        . '{{ ansible_env.HOME }}/.zshrc'
-      args:
-        executable: /bin/zsh
-      changed_when: false
+    - name: Set asdf version fact
+      ansible.builtin.set_fact:
+        asdf_version: "{{ asdf_release.json.tag_name }}"
+
+    - name: Clone asdf repository at latest release
+      ansible.builtin.git:
+        repo: "https://github.com/asdf-vm/asdf.git"
+        dest: "{{ ansible_env.HOME }}/.asdf"
+        version: "{{ asdf_version }}"
+        update: yes
+        depth: 1
+
+    - name: Ensure asdf is sourced in user's zshrc
+      ansible.builtin.lineinfile:
+        path: "{{ ansible_env.HOME }}/.zshrc"
+        line: '. "$HOME/.asdf/asdf.sh"'
+        create: yes
+        state: present
+      become: false
 
     # Java
     - name: Ensure system default JDK is available (recommended fallback)

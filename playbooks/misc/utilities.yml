@@ -57,16 +57,16 @@
       ansible.builtin.command: fc-cache -vf /usr/share/fonts/
 
     # Install AppImage Launcher
-    - name: Add AppImage Launcher PPA repository
-      apt_repository:
-        repo: 'ppa:appimagelauncher-team/stable'
-        state: present
-
-    - name: Update apt cache
-      apt:
-        update_cache: true
-
-    - name: Install AppImage Launcher
-      ansible.builtin.apt:
-        pkg:
-          - appimagelauncher
+    #- name: Add AppImage Launcher PPA repository
+    #  apt_repository:
+    #    repo: 'ppa:appimagelauncher-team/stable'
+    #    state: present
+    #
+    #- name: Update apt cache
+    #  apt:
+    #    update_cache: true
+    #
+    #- name: Install AppImage Launcher
+    #  ansible.builtin.apt:
+    #    pkg:
+    #      - appimagelauncher

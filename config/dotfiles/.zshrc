@@ -85,26 +85,20 @@ else
   export EDITOR='code'
 fi
 
-# Compilation flags
-# export ARCHFLAGS="-arch x86_64"
+# Set PATHs ################################################
 
-# Load asdf runtime manager
-. $HOME/.asdf/asdf.sh
-. $HOME/.asdf/completions/asdf.bash
-. ~/.asdf/plugins/java/set-java-home.zsh
+# ASDF
+export ASDF_PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims"
+export PATH="$ASDF_PATH:$PATH"
 
-# Set PATHs
-# ssh
-export SSH_KEY_PATH="~/.ssh/rsa_id"
-# JRE/JDK PATH
+# GO
+export GOPATH="$HOME/go"
+export PATH="$GOPATH/bin:$PATH"
+
+# JAVA
 export JRE_HOME=$(readlink -f /usr/bin/java | sed "s:bin/java::")
 export JAVA_HOME=$(readlink -f /usr/bin/javac | sed "s:bin/javac::")
-# GO PATH
-export GOPATH="$HOME/go"
-# NODE PATH
-export NODE_PATH=$(npm config get prefix)/lib/node_modules/
-# GLOBAL PATH
-export PATH="$PATH:${GOPATH//://bin:}/bin:$JAVA_HOME/bin"
+export PATH="$JAVA_HOME/bin:$PATH"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -119,18 +113,15 @@ alias dev="cd  ~/Development && l"
 alias chrome-unsecure='google-chrome --disable-web-security \
   --ignore-certificate-errors --disable-gpu --user-data-dir=/tmp/chrome-temp'
 alias clear-history="cat /dev/null > ~/.zsh_history"
+alias update="sudo apt update && sudo apt upgrade -y && flatpak update && asdf plugin-update --all"
+alias sleepin='f(){ sleep "$1"; systemctl suspend; }; f'
 
-# Auto-completion for docker
+# Docker completion
 fpath=(~/.zsh/completion $fpath)
-autoload -Uz compinit && compinit -i
-# Append completions to fpath
 fpath=(${ASDF_DIR}/completions $fpath)
-# Initialise completions with ZSH's compinit
-autoload -Uz compinit && compinit
 
-# Process /etc/profile file with bash emulation, which
-# sources /etc/profile.d/* and sets the proper PATHs, etc.
-emulate sh -c 'source /etc/profile.d/apps-bin-path.sh'
+autoload -Uz compinit
+compinit
 
 # Display system info
 neofetch

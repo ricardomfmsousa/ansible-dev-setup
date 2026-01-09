@@ -11,4 +11,4 @@ if [[ "$DRY_FLAG" == "-h" || "$DRY_FLAG" == "--help" ]]; then
 	exit 0
 fi
 
-./deploy-remote.sh localhost "$(whoami)" "${DRY_FLAG}"
+./deploy-remote.sh localhost "$(whoami)" "${DRY_FLAG}" 

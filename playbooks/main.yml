@@ -3,6 +3,21 @@
   hosts: all
   become: true
   tasks:
+    - name: Find existing Opera apt sources
+      ansible.builtin.find:
+        paths: /etc/apt/sources.list.d
+        patterns: '*.list'
+        contains: 'deb.opera.com'
+      register: opera_sources
+      become: true
+
+    - name: Disable conflicting Opera apt source files
+      ansible.builtin.shell: |
+        mv "{{ item.path }}" "{{ item.path }}.disabled"
+      loop: "{{ opera_sources.files | default([]) }}"
+      when: opera_sources.matched > 0
+      become: true
+
     # Update and upgrade apt packages
     - name: Update and upgrade apt packages
       ansible.builtin.apt:
@@ -38,12 +53,6 @@
           # Version Control
           - git # Distributed version control system
         state: present
-
-    # Install Ansible Python dependencies
-    - name: Install Ansible Python dependencies
-      ansible.builtin.pip:
-        name: 'psutil'
-        executable: pip3
 
     # Copy all utility scripts and configs to /tmp
     - name: Copy all utility scripts and configs to /tmp

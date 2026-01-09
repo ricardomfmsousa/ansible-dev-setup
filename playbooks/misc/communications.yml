@@ -11,11 +11,11 @@
         remote: flathub
 
     # Install Microsoft Teams
-    - name: Install Microsoft Teams
-      community.general.flatpak:
-        name: com.microsoft.Teams
-        state: present
-        remote: flathub
+    #- name: Install Microsoft Teams
+    #  community.general.flatpak:
+    #    name: com.microsoft.Teams
+    #    state: present
+    #    remote: flathub
 
     # Install Zoom
     - name: Install Zoom
@@ -24,9 +24,3 @@
         state: present
         remote: flathub
 
-    # Install Skype
-    - name: Install Skype
-      community.general.flatpak:
-        name: com.skype.Client
-        state: present
-        remote: flathub

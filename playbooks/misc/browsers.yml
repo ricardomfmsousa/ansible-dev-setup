@@ -1,119 +1,126 @@
 - hosts: all
-  become: yes
+  become: true
   tasks:
-    # Google Chrome
-    - name: Download Google signing key
-      ansible.builtin.get_url:
-        url: https://dl.google.com/linux/linux_signing_key.pub
-        dest: /usr/share/keyrings/google-linux-signing-keyring.asc
-        mode: '0644'
+    ############################################################
+    # Skip this entire play in dry-run mode
+    ############################################################
+    - name: Skip browser installation in check mode
+      ansible.builtin.meta: end_play
+      when: ansible_check_mode
 
-    - name: Convert Google signing key to keyring
-      ansible.builtin.command:
-        cmd: gpg --dearmor --yes -o /usr/share/keyrings/google-linux-signing-keyring.gpg /usr/share/keyrings/google-linux-signing-keyring.asc
-      args:
-        creates: /usr/share/keyrings/google-linux-signing-keyring.gpg
 
-    - name: Stat Google keyring
+    ############################################################
+    # Google Chrome (Direct .deb download and install)
+    ############################################################
+    - name: Check if Google Chrome is already installed
       ansible.builtin.stat:
-        path: /usr/share/keyrings/google-linux-signing-keyring.gpg
-      register: google_keyring
+        path: /usr/bin/google-chrome
+      register: chrome_installed
 
-    - name: Ensure Google keyring is readable
-      ansible.builtin.file:
-        path: /usr/share/keyrings/google-linux-signing-keyring.gpg
+    - name: Download Google Chrome stable .deb package
+      ansible.builtin.get_url:
+        url: https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dest: /tmp/google-chrome-stable_current_amd64.deb
         mode: '0644'
-      when: google_keyring.stat.exists
+      when: not chrome_installed.stat.exists
 
-    - name: Add Google Chrome APT repository
-      ansible.builtin.apt_repository:
-        repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main'
-        state: present
-
-    - name: Install Google Chrome package
+    - name: Install Google Chrome from .deb package
       ansible.builtin.apt:
-        name: google-chrome-stable
+        deb: /tmp/google-chrome-stable_current_amd64.deb
         state: present
-        update_cache: yes
+      when: not chrome_installed.stat.exists
 
+
+    ############################################################
     # Brave Browser
-    - name: Download Brave browser GPG key
-      ansible.builtin.get_url:
-        url: https://brave-browser-apt-release.s3.brave.com/brave-core.asc
-        dest: /usr/share/keyrings/brave-core.asc
-        mode: '0644'
+    ############################################################
+    - name: Check if Brave is already installed
+      ansible.builtin.shell: command -v brave-browser
+      register: brave_installed
+      changed_when: false
+      failed_when: false
 
-    - name: Convert Brave key to dearmored keyring
-      ansible.builtin.command:
-        cmd: gpg --dearmor --yes -o /usr/share/keyrings/brave-browser-archive-keyring.gpg /usr/share/keyrings/brave-core.asc
-      args:
-        creates: /usr/share/keyrings/brave-browser-archive-keyring.gpg
-
-    - name: Stat Brave keyring
-      ansible.builtin.stat:
-        path: /usr/share/keyrings/brave-browser-archive-keyring.gpg
-      register: brave_keyring
-
-    - name: Ensure Brave keyring is readable
-      ansible.builtin.file:
-        path: /usr/share/keyrings/brave-browser-archive-keyring.gpg
-        mode: '0644'
-      when: brave_keyring.stat.exists
-
-    - name: Add Brave browser APT source (signed-by keyring)
-      ansible.builtin.apt_repository:
-        repo: 'deb [signed-by=/usr/share/keyrings/brave-browser-archive-keyring.gpg arch=amd64] https://brave-browser-apt-release.s3.brave.com/ stable main'
+    - name: Ensure curl is installed (required for Brave official installer)
+      ansible.builtin.apt:
+        name: curl
         state: present
+      when: brave_installed.rc != 0
 
-    - name: Install Brave browser
+    - name: Download Brave official keyring (dearmored)
+      ansible.builtin.get_url:
+        url: https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+        dest: /usr/share/keyrings/brave-browser-archive-keyring.gpg
+        mode: '0644'
+      when: brave_installed.rc != 0
+
+    - name: Download Brave apt sources file (official)
+      ansible.builtin.get_url:
+        url: https://brave-browser-apt-release.s3.brave.com/brave-browser.sources
+        dest: /etc/apt/sources.list.d/brave-browser-release.sources
+        mode: '0644'
+      when: brave_installed.rc != 0
+
+    - name: Update apt cache after adding Brave repo (force)
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 0
+      when: brave_installed.rc != 0
+
+    - name: Check Brave package availability
+      ansible.builtin.shell: apt-cache policy brave-browser || true
+      register: brave_policy
+      changed_when: false
+      failed_when: false
+      when: brave_installed.rc != 0
+
+    - name: Retry apt update if Brave package not found
+      ansible.builtin.shell: |
+        apt-get update -o Acquire::Retries=3
+      register: apt_update_retry
+      changed_when: false
+      failed_when: false
+      when:
+        - brave_installed.rc != 0
+        - "'Candidate: (none)' in brave_policy.stdout or 'Unable to locate package' in (brave_policy.stderr|default(''))"
+
+    - name: Re-check Brave package availability after retry
+      ansible.builtin.shell: apt-cache policy brave-browser || true
+      register: brave_policy_retry
+      changed_when: false
+      failed_when: false
+      when: apt_update_retry is defined
+
+    - name: Fail if Brave package not available in apt after retry
+      ansible.builtin.fail:
+        msg: "Brave package not available in APT after retry. apt output:\n{{ brave_policy_retry.stdout | default(brave_policy.stdout) }}\napt stderr:\n{{ brave_policy_retry.stderr | default(brave_policy.stderr) }}"
+      when:
+        - brave_installed.rc != 0
+        - >
+          ('Candidate: (none)' in (brave_policy_retry.stdout | default(brave_policy.stdout))) or
+          ('Unable to locate package' in (brave_policy_retry.stdout | default(brave_policy.stdout))) or
+          ('Unable to locate package' in (brave_policy_retry.stderr | default(brave_policy.stderr) | default('')))
+
+    - name: Install Brave browser (official)
       ansible.builtin.apt:
         name: brave-browser
         state: present
-        update_cache: yes
+      when: "brave_installed.rc != 0 and ('Candidate: (none)' not in brave_policy.stdout)"
 
-    # Chromium
+
+    ############################################################
+    # Chromium (Flatpak)
+    ############################################################
+
     - name: Install Chromium
       community.general.flatpak:
         name: org.chromium.Chromium
         state: present
         remote: flathub
 
-    # Opera
-    - name: Download Opera browser GPG key
-      ansible.builtin.get_url:
-        url: https://deb.opera.com/archive.key
-        dest: /usr/share/keyrings/opera-archive.key
-        mode: '0644'
-
-    - name: Convert Opera key to dearmored keyring
-      ansible.builtin.command:
-        cmd: gpg --dearmor --yes -o /usr/share/keyrings/opera-archive-keyring.gpg /usr/share/keyrings/opera-archive.key
-      args:
-        creates: /usr/share/keyrings/opera-archive-keyring.gpg
-
-    - name: Stat Opera keyring
-      ansible.builtin.stat:
-        path: /usr/share/keyrings/opera-archive-keyring.gpg
-      register: opera_keyring
-
-    - name: Ensure Opera keyring is readable
-      ansible.builtin.file:
-        path: /usr/share/keyrings/opera-archive-keyring.gpg
-        mode: '0644'
-      when: opera_keyring.stat.exists
-
-    - name: Add Opera browser APT source (signed-by keyring)
-      ansible.builtin.apt_repository:
-        repo: 'deb [signed-by=/usr/share/keyrings/opera-archive-keyring.gpg arch=amd64] https://deb.opera.com/opera-stable/ stable non-free'
-        state: present
-
-    - name: Install Opera browser
-      ansible.builtin.apt:
-        name: opera-stable
-        state: present
-        update_cache: yes
-
+    ############################################################
     # Microsoft Edge
+    ############################################################
+
     - name: Install dependencies
       ansible.builtin.apt:
         name:
@@ -123,36 +130,27 @@
           - curl
         state: present
 
-    - name: Download Microsoft GPG key (ascii) to temp file
+    - name: Download Microsoft GPG key
       ansible.builtin.get_url:
         url: https://packages.microsoft.com/keys/microsoft.asc
         dest: /usr/share/keyrings/microsoft.asc
         mode: '0644'
 
-    - name: Convert Microsoft GPG key to keyring (dearmor)
+    - name: Convert Microsoft GPG key to keyring
       ansible.builtin.command:
         cmd: gpg --dearmor --yes -o /usr/share/keyrings/microsoft-edge-archive-keyring.gpg /usr/share/keyrings/microsoft.asc
       args:
         creates: /usr/share/keyrings/microsoft-edge-archive-keyring.gpg
 
-    - name: Stat Microsoft keyring
-      ansible.builtin.stat:
-        path: /usr/share/keyrings/microsoft-edge-archive-keyring.gpg
-      register: microsoft_keyring
-
-    - name: Ensure keyring is readable
+    - name: Ensure Microsoft keyring is readable
       ansible.builtin.file:
         path: /usr/share/keyrings/microsoft-edge-archive-keyring.gpg
         mode: '0644'
-      when: microsoft_keyring.stat.exists
 
     - name: Add Microsoft Edge repository
       ansible.builtin.apt_repository:
         repo: 'deb [signed-by=/usr/share/keyrings/microsoft-edge-archive-keyring.gpg] https://packages.microsoft.com/repos/edge stable main'
         state: present
-
-    - name: Update apt cache
-      ansible.builtin.apt:
         update_cache: yes
 
     - name: Install Microsoft Edge
@@ -160,19 +158,21 @@
         name: microsoft-edge-stable
         state: present
 
+
+    ############################################################
     # Responsively App
-    - name: Install dependencies
+    ############################################################
+
+    - name: Install curl
       ansible.builtin.apt:
         name: curl
         state: present
 
     - name: Download latest Responsively AppImage
       ansible.builtin.shell: |
-        # Get latest release asset URL from GitHub API and download the AppImage
         API_URL="https://api.github.com/repos/responsively-org/responsively-app-releases/releases/latest"
         ASSET_URL=$(curl -s $API_URL | grep -Po 'https://[^\"]*ResponsivelyApp[^\"]*AppImage' | head -1)
         if [ -z "$ASSET_URL" ]; then
-          echo "Could not find Responsively AppImage latest release; falling back to bundled URL"
           ASSET_URL="https://github.com/responsively-org/responsively-app-releases/releases/download/v1.15.0/ResponsivelyApp-1.15.0.AppImage"
         fi
         curl -sL "$ASSET_URL" -o /usr/local/bin/ResponsivelyApp.AppImage
@@ -199,7 +199,11 @@
         dest: /usr/share/applications/responsively.desktop
         mode: '0644'
 
-    # Tor Browser
+
+    ############################################################
+    # Tor Browser (Flatpak)
+    ############################################################
+
     - name: Install Tor Browser Launcher
       community.general.flatpak:
         name: org.torproject.torbrowser-launcher

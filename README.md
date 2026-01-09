@@ -11,12 +11,7 @@ configurations on the target machines.
 - Install the following dependencies:
 
   ```bash
-  sudo apt update && \
-  sudo apt install -y python3 python3-pip python3-venv python3-full && \
-  python3 -m venv ~/ansible-env && \
-  source ~/ansible-env/bin/activate && \
-  pip install --upgrade pip && \
-  pip install ansible ansible-runner psutil
+  sudo apt update && sudo apt install -y  ansible ansible-lint
   ```
 
 - The **target hosts** should have ssh installed:

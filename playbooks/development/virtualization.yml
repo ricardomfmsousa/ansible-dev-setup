@@ -3,7 +3,9 @@
   hosts: all
   become: true
   tasks:
+    # -------------------------
     # VirtualBox
+    # -------------------------
     - name: Set VirtualBox license to true
       ansible.builtin.debconf:
         name: virtualbox-ext-pack
@@ -14,10 +16,10 @@
     - name: Install VirtualBox core packages
       ansible.builtin.apt:
         pkg:
-          - virtualbox # VirtualBox
-          - virtualbox-dkms # VirtualBox DKMS
-          - virtualbox-guest-additions-iso # VirtualBox Guest Additions ISO
-          - virtualbox-guest-utils # VirtualBox Guest Utilities
+          - virtualbox
+          - virtualbox-dkms
+          - virtualbox-guest-additions-iso
+          - virtualbox-guest-utils
         state: present
         update_cache: true
 
@@ -33,53 +35,30 @@
       when: vbox_ext_check.stdout != ""
       failed_when: false
 
-    # Docker
-    - name: Ensure /etc/apt/keyrings exists
-      ansible.builtin.file:
-        path: /etc/apt/keyrings
-        state: directory
-        mode: '0755'
+    # -------------------------
+    # Docker (via official script)
+    # -------------------------
+    - name: Check if Docker is already installed
+      ansible.builtin.shell: command -v docker
+      register: docker_check
+      changed_when: false
+      failed_when: false
 
-    - name: Download Docker GPG key (ascii) to keyrings
-      ansible.builtin.get_url:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        dest: /etc/apt/keyrings/docker.gpg.asc
-        mode: '0644'
+    - name: Install Docker using official script
+      ansible.builtin.shell: |
+        curl -fsSL https://get.docker.com | sh
+      when: docker_check.rc != 0
 
-    - name: Convert Docker key to dearmored keyring
-      ansible.builtin.command:
-        cmd: gpg --dearmor --yes -o /etc/apt/keyrings/docker.gpg /etc/apt/keyrings/docker.gpg.asc
-      args:
-        creates: /etc/apt/keyrings/docker.gpg
-
-    - name: Ensure Docker keyring is readable
-      ansible.builtin.file:
-        path: /etc/apt/keyrings/docker.gpg
-        mode: '0644'
-
-    - name: Add Docker APT source
-      ansible.builtin.apt_repository:
-        repo: 'deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable'
-        filename: docker
+    - name: Ensure docker group exists (before adding user)
+      ansible.builtin.group:
+        name: docker
         state: present
-
-    - name: Install Docker and related packages
-      ansible.builtin.apt:
-        pkg:
-          - docker-ce # Docker Community Edition
-          - docker-ce-cli # Docker CLI
-          - containerd.io # Container runtime
-          - docker-buildx-plugin # Docker Buildx plugin
-          - docker-compose-plugin # Docker Compose plugin
-        state: present
-        update_cache: true
 
     - name: Add current user to Docker group
       ansible.builtin.user:
         name: '{{ ansible_user_id }}'
         groups: docker
         append: yes
-        state: present
 
     - name: Fix permissions for Docker socket
       ansible.builtin.file:

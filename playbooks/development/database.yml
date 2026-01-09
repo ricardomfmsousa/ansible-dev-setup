@@ -3,76 +3,24 @@
   hosts: all
   become: true
   tasks:
-    - name: Install dependencies
-      ansible.builtin.apt:
-        name:
-          - wget
-          - lsb-release
-          - gnupg
+    ############################################################
+    # DBeaver
+    ############################################################
+    - name: Install DBeaver
+      community.general.flatpak:
+        name: io.dbeaver.DBeaverCommunity
         state: present
+        remote: flathub
 
-    - name: Download DBeaver GPG key
-      ansible.builtin.get_url:
-        url: https://dbeaver.io/debs/dbeaver.gpg.key
-        dest: /usr/share/keyrings/dbeaver.gpg.asc
-        mode: '0644'
-
-    - name: Convert DBeaver key to dearmored keyring
-      ansible.builtin.command:
-        argv:
-          - gpg
-          - --dearmor
-          - /usr/share/keyrings/dbeaver.gpg.asc
-          - -o
-          - /usr/share/keyrings/dbeaver-archive-keyring.gpg
-      args:
-        creates: /usr/share/keyrings/dbeaver-archive-keyring.gpg
-
-    - name: Ensure DBeaver keyring is readable
-      ansible.builtin.file:
-        path: /usr/share/keyrings/dbeaver-archive-keyring.gpg
-        mode: '0644'
-      when: not ansible_check_mode
-
-    - name: Add DBeaver APT repository (use dbeaver-ce subpath)
-      ansible.builtin.apt_repository:
-        repo: >-
-          deb [signed-by=/usr/share/keyrings/dbeaver-archive-keyring.gpg
-          arch=amd64] https://dbeaver.io/debs/dbeaver-ce/ stable main
+    ############################################################
+    # MongoDB Compass
+    ############################################################
+    - name: Install MongoDB Compass
+      community.general.flatpak:
+        name: com.mongodb.Compass
         state: present
-        update_cache: true
-
-    - name: Fetch DBeaver Packages index (for check-mode verification)
-      ansible.builtin.uri:
-        url: https://dbeaver.io/debs/dbeaver-ce/Packages
-        return_content: yes
-        status_code: 200
-      register: dbeaver_index
-
-    - name: Set flag if DBeaver package is available in upstream index
-      ansible.builtin.set_fact:
-        dbeaver_package_available: "{{ 'Package: dbeaver-ce' in (dbeaver_index.content | default('')) }}"
-
-    - name: Install DBeaver (package)
-      ansible.builtin.apt:
-        name: dbeaver-ce
-        state: present
-        update_cache: true
-      when: not ansible_check_mode and (dbeaver_package_available | default(true))
-
-    - name: 'Check-mode: DBeaver package availability'
-      ansible.builtin.debug:
-        msg: 'DBeaver package available upstream: {{ dbeaver_package_available | default(false) }}'
-      when: ansible_check_mode
-
-    - name: WARN about MongoDB repo (manual verification required)
-      ansible.builtin.debug:
-        msg: 'MongoDB APT repo was pinned to bionic/4.2 - update manually for 24.04'
-
-    - name: Update apt cache after adding new repositories
-      ansible.builtin.apt:
-        update_cache: true
-
-    - name: 'NOTE: MongoDB Compass install requires manual verification'
-      ansible.builtin.debug:
-        msg: 'MongoDB Compass is a .deb download; no official apt repo. Manual install recommended.'
+        remote: flathub
+      register: compass_install
+      retries: 5
+      delay: 30
+      until: compass_install is succeeded

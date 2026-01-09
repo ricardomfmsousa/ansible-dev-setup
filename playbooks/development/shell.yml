@@ -10,37 +10,7 @@
         pkg:
           - zsh # Extended Bourne shell with many improvements
           - tmux # Terminal multiplexer
-          - tilix # Advanced and clean GTK3 tiling terminal emulator
       become: true
-
-    # Change the default terminal to Tilix and add dock shortcut
-    - name: Change the default terminal to Tilix
-      ansible.builtin.shell: |
-        gsettings set org.gnome.desktop.default-applications.terminal exec tilix
-      args:
-        executable: /bin/bash
-      changed_when: false
-
-    - name: Replace Gnome Terminal dock shortcut with Tilix
-      ansible.builtin.shell: |
-        FAVOURITES=$(gsettings get org.gnome.shell favorite-apps)
-        GNOME_TERM=org.gnome.Terminal.desktop
-        TILIX_TERM=com.gexperts.Tilix.desktop
-        UPDATED_FAVOURITES=$(echo $FAVOURITES | sed "s/$GNOME_TERM/$TILIX_TERM/")
-        gsettings set org.gnome.shell favorite-apps "$UPDATED_FAVOURITES"
-      args:
-        executable: /bin/bash
-      changed_when: false
-
-    # Load Tilix configurations
-    - name: Load Tilix configs
-      ansible.builtin.shell: |
-        export $(dbus-launch)
-        dconf load /com/gexperts/Tilix/ < /tmp/config/misc/tilix.dconf
-      args:
-        executable: /bin/bash
-      become: true
-      changed_when: false
 
     # Change the default shell to zsh
     - name: Change the default shell to zsh

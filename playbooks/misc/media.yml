@@ -28,6 +28,34 @@
           - audacity # Audio editor and recorder
         state: present
 
+    ############################################################
+    # Spotify
+    ############################################################
+    - name: Download Spotify GPG key
+      ansible.builtin.get_url:
+        url: https://download.spotify.com/debian/pubkey_5E3C45D7B312C643.gpg
+        dest: /usr/share/keyrings/spotify-archive-keyring.gpg
+        mode: '0644'
+
+    - name: Add Spotify apt repository (signed-by)
+      ansible.builtin.apt_repository:
+        repo: 'deb [arch=amd64 signed-by=/usr/share/keyrings/spotify-archive-keyring.gpg] http://repository.spotify.com stable non-free'
+        filename: spotify
+        state: present
+      register: spotify_repo
+      failed_when: false
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 0
+      when: spotify_repo is defined
+
+    - name: Install Spotify client
+      ansible.builtin.apt:
+        name: spotify-client
+        state: present
+
     # Install native graphics packages
     - name: Install graphics packages
       ansible.builtin.apt:

@@ -9,10 +9,16 @@
         pkg:
           - blender # 3D creation suite
           - meshlab # 3D mesh processing software
-          - freecad # 3D CAD modeler
           - openscad # The Programmers Solid 3D CAD Modeller
           - clang-format # Tool to format C/C++/Obj-C/Openscad code
         state: present
+        
+    # Install Discord via Flatpak (more portable and updated on Flathub)
+    - name: Install Freecad
+      community.general.flatpak:
+        name: org.freecad.FreeCAD
+        state: present
+        remote: flathub
 
     # Install OrcaSlicer
     - name: Install dependencies for OrcaSlicer
@@ -23,7 +29,7 @@
 
     - name: Download OrcaSlicer AppImage
       ansible.builtin.get_url:
-        url: https://github.com/SoftFever/OrcaSlicer/releases/download/v2.2.0/OrcaSlicer_Linux_V2.2.0.AppImage
+        url: https://github.com/OrcaSlicer/OrcaSlicer/releases/download/v2.3.1/OrcaSlicer_Linux_AppImage_Ubuntu2404_V2.3.1.AppImage
         dest: /usr/local/bin/OrcaSlicer.AppImage
         mode: '0755'
 

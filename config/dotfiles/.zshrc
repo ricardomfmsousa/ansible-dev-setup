@@ -119,18 +119,15 @@ alias dev="cd  ~/Development && l"
 alias chrome-unsecure='google-chrome --disable-web-security \
   --ignore-certificate-errors --disable-gpu --user-data-dir=/tmp/chrome-temp'
 alias clear-history="cat /dev/null > ~/.zsh_history"
+alias update="sudo apt update && sudo apt upgrade -y && flatpak update && asdf plugin-update --all"
+alias sleepin='f(){ sleep "$1"; systemctl suspend; }; f'
 
-# Auto-completion for docker
-fpath=(~/.zsh/completion $fpath)
-autoload -Uz compinit && compinit -i
 # Append completions to fpath
-fpath=(${ASDF_DIR}/completions $fpath)
+fpath=(~/.zsh/completion $fpath)
+fpath=(${ASDF_DATA_DIR:-$HOME/.asdf}/completions $fpath)
+
 # Initialise completions with ZSH's compinit
 autoload -Uz compinit && compinit
-
-# Process /etc/profile file with bash emulation, which
-# sources /etc/profile.d/* and sets the proper PATHs, etc.
-emulate sh -c 'source /etc/profile.d/apps-bin-path.sh'
 
 # Display system info
 neofetch
